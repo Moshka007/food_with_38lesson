@@ -95,15 +95,24 @@ window.addEventListener('DOMContentLoaded', () => {
     const btns = document.querySelectorAll('.call'),
           modal = document.querySelector('.modal'),
           modalClose = modal.querySelector('.modal__close');
-    
+
+    function openModalF() {
+        modal.classList.remove('hide');
+        modal.classList.add('show');
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';    // при появлении мадольного окна, осн страницу нельзя скролить
+        clearInterval(openModalTimeout);  // если пользователь открыл вручную, то окно не открывается(seTimeout)
+    }
     btns.forEach(item => {
-        item.addEventListener('click', () => {
-            modal.classList.remove('hide');
-            modal.classList.add('show');
-            modal.style.display = 'block';
-            document.body.style.overflow = 'hidden';    // при появлении мадольного окна, осн страницу нельзя скролить
-        });
+        item.addEventListener('click', openModalF);
     });
+
+    function modalCloseF() {
+        modal.classList.remove('show');
+        modal.classList.add('hide');
+        modal.style.display = 'none';
+        document.body.style.overflow = '';          //  возвращение скрол
+    }
 
     modalClose.addEventListener('click', () => {
         modalCloseF(modal);
@@ -121,14 +130,17 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    function modalCloseF(modal) {
-        modal.classList.remove('show');
-        modal.classList.add('hide');
-        modal.style.display = 'none';
-        document.body.style.overflow = '';          //  возвращение скрол
+    const openModalTimeout = setTimeout(openModalF, 5000);   
+
+    function openModalByScroll() {      
+        if (window.pageYOffset + document.documentElement.clientHeight >= document.documentElement.scrollHeight) {
+            openModalF();
+            window.removeEventListener('scroll', openModalByScroll); //удаляет обработчик(окно при прокрутк откр один р)
+        }
     }
 
-
+    window.addEventListener('scroll', openModalByScroll);
+ 
 });
 
     
