@@ -89,6 +89,46 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     setTime('.timer');
+
+//----------------------------------------------------------------modal-window
+
+    const btns = document.querySelectorAll('.call'),
+          modal = document.querySelector('.modal'),
+          modalClose = modal.querySelector('.modal__close');
+    
+    btns.forEach(item => {
+        item.addEventListener('click', () => {
+            modal.classList.remove('hide');
+            modal.classList.add('show');
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';    // при появлении мадольного окна, осн страницу нельзя скролить
+        });
+    });
+
+    modalClose.addEventListener('click', () => {
+        modalCloseF(modal);
+    });
+
+    modal.addEventListener('click', (event) => {    // при нажатии вне формы, окно закрывается
+        if (event.target === modal) {
+            modalCloseF(modal);
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {   // при нажатии на 'esc' закрывается мод окно
+        if (e.code === "Escape" && modal.classList.contains('show')) {
+            modalCloseF(modal);
+        }
+    });
+
+    function modalCloseF(modal) {
+        modal.classList.remove('show');
+        modal.classList.add('hide');
+        modal.style.display = 'none';
+        document.body.style.overflow = '';          //  возвращение скрол
+    }
+
+
 });
 
     
