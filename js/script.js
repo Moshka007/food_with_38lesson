@@ -93,15 +93,14 @@ window.addEventListener('DOMContentLoaded', () => {
     //----------------------------------------------------------------modal-window
 
     const btns = document.querySelectorAll('.call'),
-        modal = document.querySelector('.modal'),
-        modalClose = modal.querySelector('.modal__close');
+        modal = document.querySelector('.modal');
 
     function openModalF() {
         modal.classList.remove('hide');
         modal.classList.add('show');
         modal.style.display = 'block';
         document.body.style.overflow = 'hidden'; // при появлении мадольного окна, осн страницу нельзя скролить
-        //clearInterval(openModalTimeout);  // если пользователь открыл вручную, то окно не открывается(seTimeout)
+        clearInterval(openModalTimeout);  // если пользователь открыл вручную, то окно не открывается(seTimeout)
     }
     btns.forEach(item => {
         item.addEventListener('click', openModalF);
@@ -114,12 +113,8 @@ window.addEventListener('DOMContentLoaded', () => {
         document.body.style.overflow = ''; //  возвращение скрол
     }
 
-    modalClose.addEventListener('click', () => {
-        modalCloseF(modal);
-    });
-
     modal.addEventListener('click', (event) => { // при нажатии вне формы, окно закрывается
-        if (event.target === modal) {
+        if (event.target === modal || event.target.getAttribute('data-close') == "") {
             modalCloseF(modal);
         }
     });
@@ -130,7 +125,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    //const openModalTimeout = setTimeout(openModalF, 5000);   
+    const openModalTimeout = setTimeout(openModalF, 50000);   
 
     function openModalByScroll() {
         if (window.pageYOffset + document.documentElement.clientHeight >= document.documentElement.scrollHeight) {
@@ -216,19 +211,26 @@ window.addEventListener('DOMContentLoaded', () => {
     const forms = document.querySelectorAll('form');
 
     const massage = {
-        loading: 'Загрузка',
+        loading: 'img/modal/spinner.svg',
         success: 'Спасибо! Скоро с вами свяжемся',
         failure: 'Что-то пошло не так'
     };
+
+    forms.forEach(item => {
+        postData(item);
+    });
 
     function postData(form) {
         form.addEventListener('submit', (e) => {
             e.preventDefault();
 
-            const massDiv = document.createElement('div');
-            massDiv.classList.add('status');
-            massDiv.textContent = massage.loading;
-            form.appendChild(massDiv);
+            let massDiv = document.createElement('img');
+            massDiv.src = massage.loading;
+            massDiv.style.cssText = `
+                display: block;
+                margin: 0 auto;
+            `;
+            form.insertAdjacentElement('afterend', massDiv);
 
             const request = new XMLHttpRequest();
             request.open('POST', 'server.php');
@@ -239,20 +241,18 @@ window.addEventListener('DOMContentLoaded', () => {
             formData.forEach((value, key) => {
                 obj[key] = value;
             });                                     //--------------------------
-
             const json = JSON.stringify(obj);
+
             request.send(json);
 
             request.addEventListener('load', () => {
                 if (request.status === 200) {
                     console.log(request.response);
-                    massDiv.textContent = massage.success;
+                    showThanksModal(massage.success);
+                    massDiv.remove();
                     form.reset();
-                    setTimeout(() => {
-                        massDiv.remove();
-                    }, 2000);
                 } else {
-                    massDiv.textContent = massage.failure;
+                    showThanksModal(massage.failure);
                 }
             });
 
@@ -260,12 +260,32 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    forms.forEach(item => {
-        postData(item);
-    });
+    function showThanksModal(massage) {
+        const modalDialog = document.querySelector('.modal__dialog');
+        modalDialog.classList.add('hide');
 
-    
+        openModalF();
+        const thanksModal = document.createElement('div');
+        thanksModal.classList.add('modal__dialog');
+        thanksModal.innerHTML = `
+            <div class="modal__content">
+                <div class="modal__close" data-close>×</div>
+                <div class="modal__title">${massage}</div>
+            </div>
+        `;
+
+        document.querySelector('.modal').append(thanksModal);
+
+        setTimeout(() => {
+            thanksModal.remove();
+            modalDialog.classList.add('show');
+            modalDialog.classList.remove('hide');
+            modalCloseF();
+        }, 4000);
+    }
 });
+
+
 
 
 
