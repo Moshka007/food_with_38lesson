@@ -210,6 +210,61 @@ window.addEventListener('DOMContentLoaded', () => {
         16,
         '[data-menu]'
     ).render();
+
+    //--------------------------------------------Send to backEnd
+
+    const forms = document.querySelectorAll('form');
+
+    const massage = {
+        loading: 'Загрузка',
+        success: 'Спасибо! Скоро с вами свяжемся',
+        failure: 'Что-то пошло не так'
+    };
+
+    function postData(form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const massDiv = document.createElement('div');
+            massDiv.classList.add('status');
+            massDiv.textContent = massage.loading;
+            form.appendChild(massDiv);
+
+            const request = new XMLHttpRequest();
+            request.open('POST', 'server.php');
+            request.setRequestHeader('Content-type', 'application/json;');
+
+            const formData = new FormData(form);
+            const obj = {};                         //-------из формдаты в JSON
+            formData.forEach((value, key) => {
+                obj[key] = value;
+            });                                     //--------------------------
+
+            const json = JSON.stringify(obj);
+            request.send(json);
+
+            request.addEventListener('load', () => {
+                if (request.status === 200) {
+                    console.log(request.response);
+                    massDiv.textContent = massage.success;
+                    form.reset();
+                    setTimeout(() => {
+                        massDiv.remove();
+                    }, 2000);
+                } else {
+                    massDiv.textContent = massage.failure;
+                }
+            });
+
+
+        });
+    }
+
+    forms.forEach(item => {
+        postData(item);
+    });
+
+    
 });
 
 
