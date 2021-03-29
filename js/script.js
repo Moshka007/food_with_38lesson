@@ -232,31 +232,28 @@ window.addEventListener('DOMContentLoaded', () => {
             `;
             form.insertAdjacentElement('afterend', massDiv);
 
-            const request = new XMLHttpRequest();
-            request.open('POST', 'server.php');
-            request.setRequestHeader('Content-type', 'application/json;');
-
             const formData = new FormData(form);
             const obj = {};                         //-------из формдаты в JSON
             formData.forEach((value, key) => {
                 obj[key] = value;
             });                                     //--------------------------
-            const json = JSON.stringify(obj);
 
-            request.send(json);
-
-            request.addEventListener('load', () => {
-                if (request.status === 200) {
-                    console.log(request.response);
+            fetch('server.php', {
+                method: 'POST',
+                headers: {
+                    'Content-type': 'application/json'
+                },
+                body: JSON.stringify(obj) //data - данные, которые пришли от сервера
+            }).then(data => data.text()) // возвращаем только текст ответа а не обьект response
+            .then(data => { // при успешной отправке выполнится эта функция
+                console.log(data);
                     showThanksModal(massage.success);
                     massDiv.remove();
-                    form.reset();
-                } else {
-                    showThanksModal(massage.failure);
-                }
+            }).catch(() => {            // при ошибке выполнится эта функция
+                showThanksModal(massage.failure);
+            }).finally( () => {         // в любом случае выполнится эта функция
+                form.reset();
             });
-
-
         });
     }
 
