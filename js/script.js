@@ -125,7 +125,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    const openModalTimeout = setTimeout(openModalF, 50000);   
+    const openModalTimeout = setTimeout(openModalF, 500000);   
 
     function openModalByScroll() {
         if (window.pageYOffset + document.documentElement.clientHeight >= document.documentElement.scrollHeight) {
@@ -179,33 +179,48 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    new MenuItems(
-        "img/tabs/vegy.jpg",
-        "vegy",
-        'Меню "Фитнес"',
-        'Меню "Фитнес" - это новый подход к приготовлению блюд: больше свежих овощей и фруктов. Продукт активных и здоровых людей. Это абсолютно новый продукт с оптимальной ценой и высоким качеством!',
-        15,
-        '[data-menu]'
-    ).render();
+    const getResource = async (url) => { 
+        const res = await fetch(url);               // GET method
 
-    new MenuItems(
-        'img/tabs/elite.jpg',
-        "elite",
-        'Меню “Премиум”',
-        'В меню “Премиум” мы используем не только красивый дизайн упаковки, но и качественное исполнение блюд. Красная рыба, морепродукты, фрукты - ресторанное меню без похода в ресторан!',
-        20,
-        '[data-menu]'
-    ).render();
+        if (!res.ok) {
+            throw new Error(`Не удалось получить данные от сервера ${url}! Ошибка:${res.status}.`);
+        }                                    // создание ошибки вручную(если есть ошибка клиента, сервера или др)
+        
+        return await res.json();                    //возвращает промисы
+    };
 
-    new MenuItems(
-        "img/tabs/post.jpg",
-        "post",
-        'Меню "Постное"',
-        'Меню “Постное” - это тщательный подбор ингредиентов: полное отсутствие продуктов животного происхождения, молоко из миндаля, овса, кокоса или гречки, правильное количество белков за счет тофу и импортных вегетарианских стейков.',
-        16,
-        '[data-menu]'
-    ).render();
+    getResource('http://localhost:3000/menu')
+    .then(data => {
+        data.forEach(({img, altimg, title, descr, price}) => {  // {} - деструктуризация обьекта
+            new MenuItems(img, altimg, title, descr, price, '[data-menu]').render();
+        });
+    });
 
+
+    // getResource('http://localhost:3000/menu')   --создание эл страницы без конструктора
+    // .then(data => createCard(data));            -- исп, если нужно создать отдельный обьект(без шаблонизации)
+    
+    // function createCard(data) {
+    //     data.forEach(({img, altimg, title, descr, price}) => {
+    //         const div = document.createElement('div');
+    //         div.classList.add('menu__item');
+
+    //         div.innerHTML =  `
+    //         <img src="${img}" alt="${altimg}">
+    //         <h3 class="menu__item-subtitle">${title}</h3>
+    //         <div class="menu__item-descr">${descr}</div>
+    //         <div class="menu__item-divider"></div>
+    //         <div class="menu__item-price">
+    //             <div class="menu__item-cost">Цена:</div>
+    //             <div class="menu__item-total"><span>${price}</span> грн/день</div>
+    //         </div>;
+    //         `;
+
+    //         document.querySelector('[data-menu]').append(div);
+
+    //     });
+    // }
+    
     //--------------------------------------------Send to backEnd
 
     const forms = document.querySelectorAll('form');
@@ -217,10 +232,28 @@ window.addEventListener('DOMContentLoaded', () => {
     };
 
     forms.forEach(item => {
-        postData(item);
-    });
+        bindPostData(item);
+     });
 
-    function postData(form) {
+    const postData = async (url, data) => { // для общения с сервером создаем отдельную функцию(async/await)
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-type': 'application/json'
+            },
+            body: data
+        });
+
+        if(!res.ok) {
+            throw new Error(`Не удалось отправить данные на сервер ${url}! Ошибка: ${res.status}`);
+        }
+
+        return await res.json(); //возвращает промисы
+    };
+
+
+
+    function bindPostData(form) {
         form.addEventListener('submit', (e) => {
             e.preventDefault();
 
@@ -233,18 +266,9 @@ window.addEventListener('DOMContentLoaded', () => {
             form.insertAdjacentElement('afterend', massDiv);
 
             const formData = new FormData(form);
-            const obj = {};                         //-------из формдаты в JSON
-            formData.forEach((value, key) => {
-                obj[key] = value;
-            });                                     //--------------------------
+            const json = JSON.stringify(Object.fromEntries(formData.entries())); // из формдаты в JSON
 
-            fetch('server.php', {
-                method: 'POST',
-                headers: {
-                    'Content-type': 'application/json'
-                },
-                body: JSON.stringify(obj) //data - данные, которые пришли от сервера
-            }).then(data => data.text()) // возвращаем только текст ответа а не обьект response
+            postData('http://localhost:3000/requests', json)
             .then(data => { // при успешной отправке выполнится эта функция
                 console.log(data);
                     showThanksModal(massage.success);
