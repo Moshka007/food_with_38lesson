@@ -179,19 +179,21 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    const getResource = async (url) => { 
-        const res = await fetch(url);               // GET method
+    // const getResource = async (url) => { 
+    //     const res = await fetch(url);               // GET method
 
-        if (!res.ok) {
-            throw new Error(`Не удалось получить данные от сервера ${url}! Ошибка:${res.status}.`);
-        }                                    // создание ошибки вручную(если есть ошибка клиента, сервера или др)
+    //     if (!res.ok) {
+    //         throw new Error(`Не удалось получить данные от сервера ${url}! Ошибка:${res.status}.`);
+    //     }                                    // создание ошибки вручную(если есть ошибка клиента, сервера или др)
         
-        return await res.json();                    //возвращает промисы
-    };
+    //     return await res.json();                    //возвращает промисы
+    // };
 
-    getResource('http://localhost:3000/menu')
+    //getResource('http://localhost:3000/menu') //используется axios вместо этой функции
+
+    axios.get('http://localhost:3000/menu')
     .then(data => {
-        data.forEach(({img, altimg, title, descr, price}) => {  // {} - деструктуризация обьекта
+        data.data.forEach(({img, altimg, title, descr, price}) => {  // {} - деструктуризация обьекта
             new MenuItems(img, altimg, title, descr, price, '[data-menu]').render();
         });
     });
@@ -308,6 +310,57 @@ window.addEventListener('DOMContentLoaded', () => {
     fetch('db.json')
         .then(data => data.json())
         .then(res => console.log(res));
+
+
+    //---------------slider
+
+    const slideImg = document.querySelectorAll('.offer__slide'),
+          prev = document.querySelector('.offer__slider-prev'),
+          next = document.querySelector('.offer__slider-next'),
+          current = document.querySelector('#current'),
+          total = document.querySelector('#total');
+    let slideIndex = 0;
+
+    function checkNum(num, el) { //если num от 1 до 9, то перед числом прибавляется 0 и выводится в el
+        if (num + 1 < 10) {
+            el.textContent = `0${num + 1}`;
+        } else {
+            el.textContent = num + 1;
+        }
+    }
+
+    function showSlide(n) {
+        if (n > slideImg.length - 1) {
+            slideIndex = 0;
+        } else if (n < 0) {
+            slideIndex = slideImg.length - 1;
+        }
+
+        checkNum(slideIndex, current);
+
+        slideImg.forEach(img => img.style.display = 'none');
+        slideImg[slideIndex].style.display = '';
+    }
+
+    function plusShow(n) {
+        showSlide(slideIndex += n);
+    }
+
+    showSlide(slideIndex); 
+
+    checkNum(slideImg.length - 1, total);
+    
+   
+    prev.addEventListener('click', () => {
+        plusShow(-1);
+    });
+
+    next.addEventListener('click', () => {
+        plusShow(1);
+    });
+
+    
+
 });
 
 
